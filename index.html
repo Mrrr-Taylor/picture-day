@@ -26,28 +26,33 @@ body{margin:0;height:100%;background:var(--bg);color:var(--ink);
 .table{height:100%;display:grid;grid-template-rows:1fr auto;padding:clamp(12px,2.5vw,28px)}
 
 /* top: deck + controls */
-.top{display:flex;justify-content:space-between;align-items:flex-start;gap:clamp(16px,3vw,36px);min-height:0}
-.deck{position:relative;height:min(40vh,420px);aspect-ratio:0.75}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:clamp(16px,3vw,36px);min-height:0}
+.deck{grid-column:2;position:relative;height:min(44vh,500px);aspect-ratio:0.75}
 .deck .layer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .deck .face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   transition:transform .25s ease}
 .deck.empty{border:2px dashed #b4c8de;border-radius:10px}
 .deck .face.lift{transform:translateY(-6px) rotate(-1deg)}
 
-.controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.controls{grid-column:3;justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.fs{border:none;background:none;padding:4px;margin:0;color:var(--good);cursor:pointer;line-height:0;
+  transition:transform .15s ease}
+.fs svg{width:clamp(22px,2.4vw,30px);height:clamp(22px,2.4vw,30px)}
+.fs:hover{transform:scale(1.1)}
+.fs:focus-visible{outline:3px solid var(--ring);outline-offset:3px}
+.fs .exit,.is-fs .fs .enter{display:none}
+.is-fs .fs .exit{display:inline}
 .ctl{border:none;background:none;padding:2px 0;margin:0;color:var(--good);cursor:pointer;text-align:right;
   font-family:"Boldonse","Arial Black",Impact,sans-serif;font-size:clamp(20px,4.4vw,52px);line-height:1.7;
   transform-origin:right center;transition:transform .15s ease,opacity .2s ease}
 .ctl:hover:not(:disabled){transform:translateX(-4px)}
 .ctl:disabled{opacity:.3;cursor:default}
 .ctl:focus-visible,.slot:focus-visible{outline:3px solid var(--ring);outline-offset:3px}
-.ctl.call{animation:call 1.6s ease-in-out infinite}
-@keyframes call{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
 /* bottom: the line */
 .lineWrap{overflow-x:auto;overflow-y:hidden;padding:18px 4px 6px;scrollbar-width:thin}
 .line{display:flex;align-items:center;width:max-content;margin-inline:auto;min-height:100%}
-.card{position:relative;height:min(30vh,320px);aspect-ratio:0.75;flex:none;
+.card{position:relative;height:min(34vh,380px);aspect-ratio:0.75;flex:none;
   display:flex;flex-direction:column;align-items:center}
 .card img{width:100%;height:100%;object-fit:cover;transition:box-shadow .3s ease}
 .card.new{animation:drop .45s cubic-bezier(.2,.9,.3,1.2)}
@@ -87,6 +92,10 @@ body{margin:0;height:100%;background:var(--bg);color:var(--ink);
       </button>
       <button class="ctl" id="shuffle" aria-label="Shuffle and start a new round" title="New round">
         SHUFFLE
+      </button>
+      <button class="fs" id="fs" aria-label="Toggle fullscreen" title="Fullscreen" hidden>
+        <svg class="enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+        <svg class="exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/></svg>
       </button>
     </div>
   </div>
@@ -174,11 +183,24 @@ function render(){
   // controls
   const ch=$('challenge');
   ch.disabled = revealed || line.length<2;
-  $('shuffle').classList.toggle('call',revealed);
 }
 
 $('challenge').onclick=()=>{ if(line.length<2||revealed) return; revealed=true; lastPlaced=null; render(); };
 $('shuffle').onclick=newRound;
+(function(){
+  const root=document.documentElement, b=$('fs');
+  const canFs=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+  if(!canFs) return;
+  b.hidden=false;
+  const cur=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  b.onclick=()=>{
+    if(cur()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}
+    else{(root.requestFullscreen||root.webkitRequestFullscreen).call(root);}
+  };
+  const sync=()=>root.classList.toggle('is-fs',!!cur());
+  document.addEventListener('fullscreenchange',sync);
+  document.addEventListener('webkitfullscreenchange',sync);
+})();
 newRound();
 </script>
 </body>
